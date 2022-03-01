@@ -2,7 +2,7 @@ version: "3"
 
 services:
   namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    image: liaor/hadoop-namenode:2.0.0-hadoop2.7.4-java8
     volumes:
       - namenode:/hadoop/dfs/name
     environment:
@@ -12,7 +12,7 @@ services:
     ports:
       - "50070:50070"
   datanode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    image: liaor/hadoop-datanode:2.0.0-hadoop2.7.4-java8
     volumes:
       - datanode:/hadoop/dfs/data
     env_file:
@@ -22,7 +22,7 @@ services:
     ports:
       - "50075:50075"
   hive-server:
-    image: bde2020/hive:2.3.2-postgresql-metastore
+    image: liaor/hive:2.3.2-postgresql-metastore
     env_file:
       - ./hadoop-hive.env
     environment:
@@ -31,7 +31,7 @@ services:
     ports:
       - "10000:10000"
   hive-metastore:
-    image: bde2020/hive:2.3.2-postgresql-metastore
+    image: liaor/hive:2.3.2-postgresql-metastore
     env_file:
       - ./hadoop-hive.env
     command: /opt/hive/bin/hive --service metastore
