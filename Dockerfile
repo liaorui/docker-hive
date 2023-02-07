@@ -31,8 +31,10 @@ RUN ln -s apache-hive-$HIVE_VERSION-bin hive
 
 #log4j-2.7.1 and tez api
 RUN rm -f $HIVE_HOME/lib/log4j*jar
-ADD lib/log4j*jar $HIVE_HOME/lib/
-ADD lib/tez*jar $HIVE_HOME/lib/
+RUN rm -f $HIVE_HOME/lib/jackson-core-*jar
+RUN rm -f $HIVE_HOME/lib/jackson-databind-*jar
+RUN rm -f $HIVE_HOME/lib/jackson-annotations-*jar
+ADD lib/* $HIVE_HOME/lib/
 
 #Custom configuration goes here
 ADD conf/hive-site.xml $HIVE_HOME/conf
