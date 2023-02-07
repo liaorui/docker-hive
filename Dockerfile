@@ -3,6 +3,8 @@ MAINTAINER ryanrliao <ryanrliao@tencent.com>
 
 ENV JAVA_HOME=/opt/jdk
 
+USER root
+
 RUN apk add tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo Asia/Shanghai > /etc/timezone && apk del tzdata
     RUN apk add --no-cache sudo procps psmisc snappy-dev lz4-dev lzo-dev vim busybox-extras net-tools curl perl
@@ -31,6 +33,7 @@ RUN ln -s apache-hive-$HIVE_VERSION-bin hive
 
 #log4j-2.7.1 and tez api
 RUN rm -f $HIVE_HOME/lib/log4j*jar
+RUN rm -f $HIVE_HOME/lib/guava*jar
 RUN rm -f $HIVE_HOME/lib/jackson-core-*jar
 RUN rm -f $HIVE_HOME/lib/jackson-databind-*jar
 RUN rm -f $HIVE_HOME/lib/jackson-annotations-*jar
