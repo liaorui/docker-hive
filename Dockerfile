@@ -1,14 +1,20 @@
-FROM bde2020/hadoop-base:2.0.0-hadoop2.7.4-java8
+FROM liaor/hadoop-namenode:2.0.0-hadoop3.2.3-java8 
+MAINTAINER ryanrliao <ryanrliao@tencent.com>
 
-MAINTAINER Yiannis Mouchakis <gmouchakis@iit.demokritos.gr>
-MAINTAINER Ivan Ermilov <ivan.s.ermilov@gmail.com>
+ENV JAVA_HOME=/opt/jdk
+
+RUN apk add tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo Asia/Shanghai > /etc/timezone && apk del tzdata
+    RUN apk add --no-cache sudo procps psmisc snappy-dev lz4-dev lzo-dev vim busybox-extras net-tools curl perl
 
 # Allow buildtime config of HIVE_VERSION
 ARG HIVE_VERSION
 # Set HIVE_VERSION from arg if provided at build, env if provided at run, or default
 # https://docs.docker.com/engine/reference/builder/#using-arg-variables
 # https://docs.docker.com/engine/reference/builder/#environment-replacement
-ENV HIVE_VERSION=${HIVE_VERSION:-2.3.2}
+ENV HIVE_VERSION=${HIVE_VERSION:-3.1.2}
+
+ENV HADOOP_VERSION=3.2.3
 
 ENV HIVE_HOME /opt/hive
 ENV PATH $HIVE_HOME/bin:$PATH
@@ -17,19 +23,16 @@ ENV HADOOP_HOME /opt/hadoop-$HADOOP_VERSION
 WORKDIR /opt
 
 #Install Hive and PostgreSQL JDBC
-RUN apt-get update && apt-get install -y wget procps && \
-	wget https://archive.apache.org/dist/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz && \
-	tar -xzvf apache-hive-$HIVE_VERSION-bin.tar.gz && \
-	mv apache-hive-$HIVE_VERSION-bin hive && \
-	wget https://jdbc.postgresql.org/download/postgresql-9.4.1212.jar -O $HIVE_HOME/lib/postgresql-jdbc.jar && \
-	rm apache-hive-$HIVE_VERSION-bin.tar.gz && \
-	apt-get --purge remove -y wget && \
-	apt-get clean && \
-	rm -rf /var/lib/apt/lists/*
-
+ADD apache-hive-$HIVE_VERSION-bin.tar.gz /opt
+RUN ln -s apache-hive-$HIVE_VERSION-bin hive 
 
 #Spark should be compiled with Hive to be able to use it
 #hive-site.xml should be copied to $SPARK_HOME/conf folder
+
+#log4j-2.7.1 and tez api
+RUN rm -f $HIVE_HOME/lib/log4j*jar
+ADD lib/log4j*jar $HIVE_HOME/lib/
+ADD lib/tez*jar $HIVE_HOME/lib/
 
 #Custom configuration goes here
 ADD conf/hive-site.xml $HIVE_HOME/conf
@@ -46,8 +49,15 @@ RUN chmod +x /usr/local/bin/startup.sh
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+RUN adduser -s /bin/bash -h /opt -D hive
+RUN chown -R hive:hive /opt
+RUN chmod -R g+rwx /opt
+RUN chmod u+w /etc/sudoers && sed -i '$a\%hadoop ALL=NOPASSWD: /usr/sbin/adduser,/bin/su' /etc/sudoers
+
 EXPOSE 10000
 EXPOSE 10002
+
+USER hive
 
 ENTRYPOINT ["entrypoint.sh"]
 CMD startup.sh
